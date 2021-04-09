@@ -1,18 +1,21 @@
 <template>
   <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <el-row>
+      <el-col v-for="item in 2" :key="'vp-'+item" :span="12">
+        <VideoPlayer :no="item" />
+      </el-col>
+    </el-row>
   </div>
 </template>
-
 <script>
-// @ is an alias to /src
-import HelloWorld from '@/components/HelloWorld.vue'
-
+/* eslint-disable */
+import VideoPlayer from '@/components/VideoPlayer.vue'
 export default {
   name: 'Home',
   components: {
-    HelloWorld
+    VideoPlayer
   }
 }
+/* eslint-enable */
+
 </script>
