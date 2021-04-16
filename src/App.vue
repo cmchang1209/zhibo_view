@@ -11,4 +11,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.canvas {
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.hide {
+  display: none;
+}
+
 </style>
