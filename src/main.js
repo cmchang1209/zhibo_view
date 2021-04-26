@@ -7,6 +7,7 @@ import ElementUI from 'element-ui'
 import 'element-theme-dark'
 import VueSocketIOExt from 'vue-socket.io-extended'
 import { io } from 'socket.io-client'
+import JSMpeg from './assets/js/jsmpeg.min1'
 
 Vue.config.productionTip = false
 Vue.use(ElementUI)

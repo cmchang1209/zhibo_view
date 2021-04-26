@@ -1,16 +1,7 @@
 <template>
   <div class="video-player" :id="'video-player-'+roomId+'-'+chanel">
-    <!-- <canvas v-show="p_status === 1 && c_status >= 2" :id="'video-canvas-'+chanel" class="hide"></canvas> -->
-    <template v-if="p_status === 1 && c_status === 1">
-      <h1>On standby</h1>
-      <ul>
-        <li>Equipment Name : {{ e_name }}</li>
-        <li>Image Source Name : {{ c_name }}</li>
-        <li>port : {{ port }}</li>
-      </ul>
-    </template>
-    <h1 v-else-if="p_status === null && c_status === null">No Video</h1>
-    <div v-else-if="p_status === 1 && c_status >= 2" class="loading" :id="'loading-'+chanel"></div>
+    <div v-if="status !== 1" class="no-video" :id="'no-video-'+chanel">
+    </div>
   </div>
 </template>
 <script>
@@ -21,31 +12,36 @@ export default {
   props: ['roomId', 'chanel'],
   sockets: {
     chanelInfo(val) {
-      if (val.me.roomId === this.roomId && val.me.chanel === this.chanel) {
+      if (val.roomId === this.roomId && val.chanel === this.chanel) {
         if (val.data.length > 0) {
-          this.p_status = val.data[0].p_status
-          this.c_status = val.data[0].c_status
-          this.e_name = val.data[0].name
-          var content = JSON.parse(val.data[0].content)
-          var c = content.filter((item) => {
-            return item.usb_id === val.data[0].usb_id
-          })
-          this.c_name = c[0].name
-          this.port = val.data[0].port_no
-          if (val.data[0].p_status === 1 && val.data[0].c_status === 2) {
-            this.play(val.data[0].port_no + 1)
+          if (val.data[0].status === 1 && val.data[0].dev_name !== null) {
+            this.port = val.data[0].port_no
+            if(val.data[0].type !== 1) {
+              var url = `ws://${document.location.hostname}:${this.port + 1}/`
+              this.audioPlayer = new JSMpeg.Player(url, { autoplay: true })
+            }
+            this.play()
           }
-        } else {
-          this.p_status = null
-          this.c_status = null
         }
       }
     },
-    echoChanelStatus(val) {
+    changeChanelStatus(val) {
       if (val.roomId === this.roomId && val.chanel === this.chanel) {
-        this.c_status = val.status
-        if (val.status === 2) {
-          this.play(val.port + 1)
+        switch (val.status) {
+          case 1:
+            if (val.data.length > 0 && val.data[0].status === 1) {
+              this.port = val.data[0].port_no
+              this.play()
+            }
+            break
+          case 2:
+            if (this.status === 1) {
+              this.status = ''
+              this.worker.postMessage({
+                type: 'destroy'
+              })
+            }
+            break
         }
       }
     }
@@ -53,46 +49,37 @@ export default {
   data() {
     return {
       worker: null,
-      c_status: '',
-      p_status: '',
+      status: '',
       video: null,
       canvas: null,
       oc: null,
-      e_name: null,
-      c_name: null,
-      port: null
+      port: null,
+      audioPlayer: null
     }
   },
   created() {
     this.worker = new Worker()
     this.$socket.client.emit('getChanelInfo', { roomId: this.roomId, chanel: this.chanel })
-  },
-  mounted() {
     this.worker.onmessage = (evt) => {
       const data = evt.data
       switch (data.type) {
-        case 'hideLodaingIcon':
-          setTimeout(() => {
-            const loading = document.getElementById(`loading-${this.chanel}`)
-            loading.classList.add("hide")
-            this.canvas.classList.remove("hide")
-          }, 1000)
+        case 'play':
+          this.status = 1
           break
-        case 'ws_erroe':
-          this.canvas.remove()
-          this.canvas = null
-          this.oc = null
-          this.$socket.client.emit('changeChanelStatus', { roomId: this.roomId, chanel: this.chanel, status: 1, port: null, from: 'view' })
+        case 'destroy':
+          this.destroy()
           break
       }
     }
   },
+  computed: {},
+  mounted() {},
   methods: {
-    play(port) {
+    play() {
+      var port = this.port + 1
       this.video = document.getElementById(`video-player-${this.roomId}-${this.chanel}`)
       this.canvas = document.createElement("CANVAS")
       this.canvas.classList.add("canvas")
-      this.canvas.classList.add("hide")
       this.video.appendChild(this.canvas)
       this.oc = this.canvas.transferControlToOffscreen()
       this.worker.postMessage({
@@ -102,6 +89,15 @@ export default {
           url: `ws://${document.location.hostname}:${port}/`
         }
       }, [this.oc])
+    },
+    destroy() {
+      if(this.audioPlayer !== null ) this.audioPlayer.destroy()
+      this.audioPlayer = null
+      this.status = ''
+      if (this.canvas === null) return
+      this.canvas.remove()
+      this.canvas = null
+      this.oc = null
     }
   }
 }
@@ -118,15 +114,16 @@ export default {
   justify-content: center;
   flex-direction: column;
 
-  .loading {
+  .no-video {
+    margin: 15px;
     position: absolute;
     z-index: 10;
-    width: 100%;
-    height: 100%;
-    background-image: url('../assets/img/loading.gif');
+    width: calc(100%-15px);
+    height: calc(100%-15px);
+    background-image: url('../assets/img/no-video.png');
     background-position: center;
     background-repeat: no-repeat;
-    background-size: 20%;
+    background-size: cover;
   }
 
 }
