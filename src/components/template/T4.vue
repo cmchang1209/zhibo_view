@@ -1,7 +1,7 @@
 <template>
   <el-row class="screen">
-    <el-col v-for="item in type" :key="'screen-' + item" :span="12">
-      <VideoPlayer :roomId="roomId" :chanel="item" />
+    <el-col v-for="item in 4" :key="'screen-' + item" :span="12">
+      <VideoPlayer :roomId="roomId" :chanel="item" :mute="mute" />
     </el-col>
   </el-row>
 </template>
@@ -13,7 +13,7 @@ export default {
   components: {
     VideoPlayer
   },
-  props: ['roomId', 'type'],
+  props: ['roomId', 'mute'],
   sockets: {
     connect() {}
   },

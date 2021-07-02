@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "core-js": "^3.6.5",
-    "element-theme-dark": "^1.0.3",
     "element-ui": "^2.15.1",
     "socket.io-client": "^4.0.1",
     "vue": "^2.6.11",

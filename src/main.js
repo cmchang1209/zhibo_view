@@ -1,13 +1,15 @@
-/* eslint-disable */
 import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 import store from './store'
 import ElementUI from 'element-ui'
-import 'element-theme-dark'
+import 'element-ui/lib/theme-chalk/index.css'
 import VueSocketIOExt from 'vue-socket.io-extended'
 import { io } from 'socket.io-client'
+
+/* eslint-disable */
 import JSMpeg from './assets/js/jsmpeg.min1'
+import './assets/icon/iconfont.css'
 
 Vue.config.productionTip = false
 Vue.use(ElementUI)

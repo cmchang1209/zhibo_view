@@ -9,14 +9,16 @@
 import Worker from "worker-loader!@/assets/js/worker"
 export default {
   name: 'VideoPlayer',
-  props: ['roomId', 'chanel'],
+  props: ['roomId', 'chanel', 'mute'],
   sockets: {
     chanelInfo(val) {
       if (val.roomId === this.roomId && val.chanel === this.chanel) {
         if (val.data.length > 0) {
           if (val.data[0].status === 1 && val.data[0].dev_name !== null) {
             this.port = val.data[0].port_no
-            if(val.data[0].type !== 1) {
+            this.usb_id = val.data[0].usb_id
+            this.d_type = val.data[0].type /*cam or screen*/
+            if (this.d_type !== 1 && this.mute === 0 && this.usb_id === 3) {
               var url = `ws://${document.location.hostname}:${this.port + 1}/`
               this.audioPlayer = new JSMpeg.Player(url, { autoplay: true })
             }
@@ -44,6 +46,17 @@ export default {
             break
         }
       }
+    },
+    changeMuteStatus(val) {
+      if (this.d_type !== 1 && this.usb_id === 3 && val.data.changedRows === 1) {
+        if (val.type === 1) {
+          if (this.audioPlayer !== null) this.audioPlayer.destroy()
+          this.audioPlayer = null
+        } else {
+          var url = `ws://${document.location.hostname}:${this.port + 1}/`
+          this.audioPlayer = new JSMpeg.Player(url, { autoplay: true })
+        }
+      }
     }
   },
   data() {
@@ -54,7 +67,9 @@ export default {
       canvas: null,
       oc: null,
       port: null,
-      audioPlayer: null
+      audioPlayer: null,
+      usb_id: null,
+      d_type: null
     }
   },
   created() {
@@ -91,7 +106,7 @@ export default {
       }, [this.oc])
     },
     destroy() {
-      if(this.audioPlayer !== null ) this.audioPlayer.destroy()
+      if (this.audioPlayer !== null) this.audioPlayer.destroy()
       this.audioPlayer = null
       this.status = ''
       if (this.canvas === null) return
